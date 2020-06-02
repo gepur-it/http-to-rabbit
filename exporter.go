@@ -14,11 +14,23 @@ func createPublishManger(config Configuration) *PublishManger {
 	}
 
 	manager := &PublishManger{
-		rabbit:      rabbit,
-		isConnected: false,
+		rabbit:       rabbit,
+		retriesCount: config.RetriesCount,
+		isConnected:  false,
 	}
 
 	return manager
+}
+
+type Message struct {
+	queueName   string
+	body        string
+	errorChanel chan<- PublishResult
+}
+
+type PublishResult struct {
+	success bool
+	error   string
 }
 
 func main() {
@@ -31,6 +43,32 @@ func main() {
 	}
 
 	manager := createPublishManger(config)
+
+	messageChanel := make(chan Message)
+	defer close(messageChanel)
+
+	go func(messages <-chan Message) {
+		for {
+			msg := <-messages
+
+			err = manager.publishWithReconnects(msg.queueName, msg.body)
+
+			var res PublishResult
+			if err != nil {
+				res = PublishResult{
+					success: false,
+					error:   err.Error(),
+				}
+			} else {
+				res = PublishResult{
+					success: true,
+					error:   "",
+				}
+			}
+
+			msg.errorChanel <- res
+		}
+	}(messageChanel)
 
 	app := &App{
 		DefaultRoute: func(resp Response, req Request) {
@@ -49,10 +87,19 @@ func main() {
 			return
 		}
 
-		err = manager.publish(queueName, string(b))
-		if err != nil {
+		respChan := make(chan PublishResult)
+		defer close(respChan)
+
+		messageChanel <- Message{
+			queueName:   queueName,
+			body:        string(b),
+			errorChanel: respChan,
+		}
+
+		PublishResult := <-respChan
+		if !PublishResult.success {
 			log.Printf("%s", "Cant publish")
-			http.Error(resp, err.Error(), http.StatusBadRequest)
+			http.Error(resp, PublishResult.error, http.StatusInternalServerError)
 			return
 		}
 

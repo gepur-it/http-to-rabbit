@@ -8,6 +8,7 @@ import (
 
 type Configuration struct {
 	ConnectionString string `json:"rabbit_connection_string"`
+	RetriesCount     int    `json:"retries_count"`
 }
 
 func configuration() (Configuration, error) {

@@ -2,27 +2,14 @@ package main
 
 import (
 	"log"
-	"sync"
 
 	"github.com/streadway/amqp"
 )
 
 type PublishManger struct {
-	rabbit      *Rabbit
-	isConnected bool
-	mux         sync.Mutex
-}
-
-func (manager *PublishManger) Lock() {
-	log.Print("request lock")
-	manager.mux.Lock()
-	log.Print("locked")
-}
-
-func (manager *PublishManger) Unlock() {
-	log.Print("request unlock")
-	manager.mux.Unlock()
-	log.Print("unlocked")
+	rabbit       *Rabbit
+	retriesCount int
+	isConnected  bool
 }
 
 func (manager *PublishManger) Connect() error {
@@ -50,9 +37,6 @@ func (manager *PublishManger) Disconnect() {
 }
 
 func (manager *PublishManger) publish(queue string, body string) error {
-	manager.Lock()
-	defer manager.Unlock()
-
 	err := manager.Connect()
 	if err != nil {
 		log.Printf("%s", "Connection error")
@@ -89,6 +73,18 @@ func (manager *PublishManger) publish(queue string, body string) error {
 	if err != nil {
 		log.Printf("Failed to publish a message: %s", err)
 		manager.Disconnect()
+	}
+
+	return err
+}
+
+func (manager *PublishManger) publishWithReconnects(queue string, body string) error {
+	var err error
+	for i := 0; i <= manager.retriesCount; i++ {
+		err = manager.publish(queue, body)
+		if err == nil {
+			break
+		}
 	}
 
 	return err

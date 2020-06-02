@@ -1,0 +1,3 @@
+{
+    "rabbit_connection_string": "amqp://gepur_erp:gepur_erp@localhost:5672"
+}

@@ -30,6 +30,13 @@ func (rabbit *Rabbit) Connect() error {
 		return err
 	}
 
+	err = ch.Tx()
+	if err != nil {
+		log.Printf("%s: %s", "Failed to puts the channel into transaction mode", err)
+
+		return err
+	}
+
 	rabbit.channel = ch
 
 	return nil

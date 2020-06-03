@@ -59,31 +59,22 @@ func (manager *PublishManger) publish(queue string, body string) error {
 		return err
 	}
 
-	q, err := manager.rabbit.channel.QueueDeclare(
-		queue, // name
-		true,  // durable
-		false, // delete when unused
-		false, // exclusive
-		false, // no-wait
-		nil,   // arguments
-	)
-
-	if err != nil {
-		manager.Disconnect()
-
-		return err
-	}
-
 	err = manager.rabbit.channel.Publish(
-		"",     // exchange
-		q.Name, // routing key
-		false,  // mandatory
-		false,  // immediate
+		queue, // exchange
+		"",    // routing key
+		false, // mandatory
+		false, // immediate
 		amqp.Publishing{
 			ContentType: "text/plain",
 			Body:        []byte(body),
 		})
 
+	if err != nil {
+		manager.Disconnect()
+		return err
+	}
+
+	err = manager.rabbit.channel.TxCommit()
 	if err != nil {
 		manager.Disconnect()
 	}

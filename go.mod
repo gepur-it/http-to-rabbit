@@ -1,4 +1,4 @@
-module gepur.com/exporter
+module gepur.com/http-to-rabbit
 
 go 1.14
 

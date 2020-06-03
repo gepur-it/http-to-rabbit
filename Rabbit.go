@@ -24,7 +24,7 @@ func (rabbit *Rabbit) Connect() error {
 
 	ch, err := conn.Channel()
 	if err != nil {
-		log.Printf("%s: %s", "Failed to publish a message", err)
+		log.Printf("%s: %s", "Failed to create a channel", err)
 
 		conn.Close()
 		return err

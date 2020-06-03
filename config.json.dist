@@ -1,4 +1,18 @@
 {
     "rabbit_connection_string": "amqp://gepur_erp:gepur_erp@localhost:5672",
-    "retries_count": 5
+    "retries_count": 5,
+    "logstash": {
+        "application_name": "OneC-Endpoint",
+        "protocol": "udp",
+        "address": "localhost:3060"
+    },
+    "smtp": {
+        "application_name": "OneC-Endpoint",
+        "smtp_host": "smtp.example.com",
+        "smtp_port": 2525,
+        "smtp_from": "admin@example.com",
+        "smtp_to": "admin@example.com",
+        "smtp_username": "admin@example.com",
+        "smtp_passwd": "passwd"
+    }
 }

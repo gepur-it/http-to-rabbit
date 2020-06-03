@@ -4,23 +4,9 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+
+	logger "github.com/sirupsen/logrus"
 )
-
-func createPublishManger(config Configuration) *PublishManger {
-	rabbit := &Rabbit{
-		config.ConnectionString,
-		nil,
-		nil,
-	}
-
-	manager := &PublishManger{
-		rabbit:       rabbit,
-		retriesCount: config.RetriesCount,
-		isConnected:  false,
-	}
-
-	return manager
-}
 
 type Message struct {
 	queueName   string
@@ -34,19 +20,22 @@ type PublishResult struct {
 }
 
 func main() {
-	log.Print("Start")
-
 	config, err := configuration()
 	if err != nil {
 		log.Printf("%s: %s", "Configuration fail", err)
 		return
 	}
 
+	initLogger(config)
+
 	manager := createPublishManger(config)
 
 	messageChanel := make(chan Message)
 	defer close(messageChanel)
 
+	logger.Info("Service strated")
+
+	// register publisher worker
 	go func(messages <-chan Message) {
 		for {
 			msg := <-messages
@@ -98,13 +87,12 @@ func main() {
 
 		PublishResult := <-respChan
 		if !PublishResult.success {
-			log.Printf("%s", "Cant publish")
-			http.Error(resp, PublishResult.error, http.StatusInternalServerError)
+			resp.Error(PublishResult.error)
 			return
 		}
 
 		resp.Success()
 	})
 
-	log.Fatal(http.ListenAndServe(":7000", app))
+	logger.Fatal(http.ListenAndServe(":7000", app))
 }

@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"strings"
 )
 
 type Request struct {
@@ -27,7 +28,15 @@ func (r *Response) Success() {
 	r.Header().Set("Content-Type", "application/json")
 	r.WriteHeader(http.StatusOK)
 
-	io.WriteString(r, "{\"status\":\"OK\"}")
+	io.WriteString(r, "{\"success\":true}")
+}
+
+func (r *Response) Error(error string) {
+	r.Header().Set("Content-Type", "application/json")
+	r.WriteHeader(http.StatusInternalServerError)
+
+	errorStr := strings.Replace(error, `"`, `\"`, -1)
+	io.WriteString(r, fmt.Sprintf("{\"success\":false,\"error\":\"%s\"}", errorStr))
 }
 
 type Handler func(Response, Request)

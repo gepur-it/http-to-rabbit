@@ -1,8 +1,9 @@
 package main
 
 import (
-	"log"
+	"fmt"
 
+	logger "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 )
 
@@ -10,6 +11,22 @@ type PublishManger struct {
 	rabbit       *Rabbit
 	retriesCount int
 	isConnected  bool
+}
+
+func createPublishManger(config Configuration) *PublishManger {
+	rabbit := &Rabbit{
+		config.ConnectionString,
+		nil,
+		nil,
+	}
+
+	manager := &PublishManger{
+		rabbit:       rabbit,
+		retriesCount: config.RetriesCount,
+		isConnected:  false,
+	}
+
+	return manager
 }
 
 func (manager *PublishManger) Connect() error {
@@ -39,8 +56,6 @@ func (manager *PublishManger) Disconnect() {
 func (manager *PublishManger) publish(queue string, body string) error {
 	err := manager.Connect()
 	if err != nil {
-		log.Printf("%s", "Connection error")
-
 		return err
 	}
 
@@ -54,7 +69,6 @@ func (manager *PublishManger) publish(queue string, body string) error {
 	)
 
 	if err != nil {
-		log.Printf("%s", "Error declare")
 		manager.Disconnect()
 
 		return err
@@ -71,7 +85,6 @@ func (manager *PublishManger) publish(queue string, body string) error {
 		})
 
 	if err != nil {
-		log.Printf("Failed to publish a message: %s", err)
 		manager.Disconnect()
 	}
 
@@ -84,7 +97,21 @@ func (manager *PublishManger) publishWithReconnects(queue string, body string) e
 		err = manager.publish(queue, body)
 		if err == nil {
 			break
+		} else {
+			logger.WithFields(logger.Fields{
+				"error": err,
+				"queue": queue,
+				"body":  body,
+			}).Error(fmt.Sprintf("Failed to publish a message. Аttempt #%d", i+1))
 		}
+	}
+
+	if err != nil {
+		logger.WithFields(logger.Fields{
+			"error": err,
+			"queue": queue,
+			"body":  body,
+		}).Error("Failed to publish a message. Maximum attempts reached")
 	}
 
 	return err

@@ -6,9 +6,27 @@ import (
 	"os"
 )
 
+type LogstashConfig struct {
+	ApplicationName string `json:"application_name"`
+	Protocol        string `json:"protocol"`
+	Address         string `json:"address"`
+}
+
+type EmailConfig struct {
+	ApplicationName string `json:"application_name"`
+	SmtpHost        string `json:"smtp_host"`
+	SmtpPort        int    `json:"smtp_port"`
+	SmtpFrom        string `json:"smtp_from"`
+	SmtpTo          string `json:"smtp_to"`
+	SmtpUsername    string `json:"smtp_username"`
+	SmtpPassword    string `json:"smtp_passwd"`
+}
+
 type Configuration struct {
-	ConnectionString string `json:"rabbit_connection_string"`
-	RetriesCount     int    `json:"retries_count"`
+	ConnectionString string         `json:"rabbit_connection_string"`
+	RetriesCount     int            `json:"retries_count"`
+	Logstash         LogstashConfig `json:"logstash"`
+	Email            EmailConfig    `json:"smtp"`
 }
 
 func configuration() (Configuration, error) {

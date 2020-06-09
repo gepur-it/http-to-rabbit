@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 
 	logger "github.com/sirupsen/logrus"
 
@@ -96,5 +97,7 @@ func main() {
 		resp.Success()
 	})
 
-	logger.Fatal(http.ListenAndServe(":7000", app))
+	portString := strconv.Itoa(config.ListenPort)
+
+	logger.Fatal(http.ListenAndServe(":"+portString, app))
 }

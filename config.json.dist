@@ -1,4 +1,5 @@
 {
+    "listen_port": 80,
     "rabbit_connection_string": "amqp://gepur_erp:gepur_erp@localhost:5672",
     "retries_count": 5,
     "logstash": {

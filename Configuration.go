@@ -23,6 +23,7 @@ type EmailConfig struct {
 }
 
 type Configuration struct {
+	ListenPort       int            `json:"listen_port"`
 	ConnectionString string         `json:"rabbit_connection_string"`
 	RetriesCount     int            `json:"retries_count"`
 	Logstash         LogstashConfig `json:"logstash"`
